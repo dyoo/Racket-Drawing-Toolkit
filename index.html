@@ -1,0 +1,27 @@
+<html>
+    <head>
+        <title>DC-Canvas Implementation</title>
+        <script type="text/javascript" src="transform.js"></script>
+        <script type="text/javascript" src="dc-canvas.js"></script>
+    </head>
+    <body onLoad="context = document.getElementById('canvas1').getContext('2d');">
+        <canvas id="canvas1" width="500" height="500" style="border: solid 1px black;"></canvas>
+        <br/>
+        <input type="button" value="Run Drawing Tests" onClick="context.setBackground('white') ;runTests(drawing, context)" />
+        <input type="button" value="Run Mask Tests" onClick="context.setBackground('white') ;runTests(masks, context)" />
+        <input type="button" value="Run Brush Tests" onClick="context.setBackground('white') ;runTests(brushes, context)" />
+        <br/>
+        <input type="button" value="(send DC clear)" onClick="context.setBackground('white'); context.clear()" />
+        <input type="button" value="Run Property Tests" onClick="runTests(properties, context)" />
+        <input type="button" value="Run Affine Matrix Tests" onClick="runTests(matrix, context)" />
+        <br/>
+        Feel free to try out the API manually:<br/>
+        Open a javascript console, and refer to functions of the <tt>context</tt> object. For example, if you'd like to use the <tt>draw-rounded-rectangle</tt> function, you would type <tt>context.drawRoundedRectangle(0,0,100,100,30)</tt>. Any input that requires a list (<tt>new Gradient()</tt>, for example) should instead be passed a javascript array.
+        <br/>
+        <img src="icon.gif" id="i1" style="visibility: hidden;"/>
+        <img src="BWMask.gif" id="BWmask" style="visibility: hidden;"/>
+        <img src="AlphaMask.png" id="AlphaMask" style="visibility: hidden;"/>
+        <img src="ColorMask.png" id="ColorMask" style="visibility: hidden;"/>
+    </body>
+    <script type="text/javascript" src="dc-tests.js"></script>
+</html>
