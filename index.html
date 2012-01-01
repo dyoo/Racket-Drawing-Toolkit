@@ -1,27 +1,51 @@
 <html>
     <head>
-        <title>DC-Canvas Implementation</title>
+        <title>Racket Drawing Toolkit</title>
         <script type="text/javascript" src="transform.js"></script>
-        <script type="text/javascript" src="dc-canvas.js"></script>
+        <script type="text/javascript" src="colors.js"></script>
+        <script type="text/javascript" src="PathRegion.js"></script>
+        <script type="text/javascript" src="class-extras.js"></script>
+        <script type="text/javascript" src="bitmap.js"></script>
+        <script type="text/javascript" src="FontPenBrushGradient.js"></script>
+        <script type="text/javascript" src="dc.js"></script>
+<!--        
+        // WONTFIX:
+        //      - smoothing
+        //      - dashed or dotted pen styles (support would require reimplementing lines and curves themselves)
+        // TODO:
+        //      - multiple constructors for classes
+        //      - try smoothing appearance using floor(pen.width/2) as a translate
+        //      - TEST SUITES: transforms, paths, regions
+        //      - measureText needs to be rigorously tested!
+        
+-->
+        
+        <style>
+            body{background: white;}
+            canvas{border: solid 1px black;}
+        </style>
     </head>
-    <body onLoad="context = document.getElementById('canvas1').getContext('2d');">
-        <canvas id="canvas1" width="500" height="500" style="border: solid 1px black;"></canvas>
-        <br/>
-        <input type="button" value="Run Drawing Tests" onClick="context.setBackground('white') ;runTests(drawing, context)" />
-        <input type="button" value="Run Mask Tests" onClick="context.setBackground('white') ;runTests(masks, context)" />
-        <input type="button" value="Run Brush Tests" onClick="context.setBackground('white') ;runTests(brushes, context)" />
-        <br/>
-        <input type="button" value="(send DC clear)" onClick="context.setBackground('white'); context.clear()" />
-        <input type="button" value="Run Property Tests" onClick="runTests(properties, context)" />
-        <input type="button" value="Run Affine Matrix Tests" onClick="runTests(matrix, context)" />
+    <body onLoad="context = new dc(); document.body.appendChild(context.canvas);">
+        <h1>RacketDrawingToolkit.js</h1>
+        A javascript implementation of the <a href="http://docs.racket-lang.org/draw/index.html?q=dc">Racket Drawing Toolkit</a>. <br/>
+        <b>Tests</b>
+        <ul>
+            <li><a href="http://docs.racket-lang.org/draw/region_.html?q=dc">region%</a></li> 
+            <li><a href="http://docs.racket-lang.org/draw/dc___.html?q=dc">dc%</a> [<a href="#" onClick="runTests(drawing, context)">Run Tests</a>]</li>
+            <li><a href="http://docs.racket-lang.org/draw/dc-path_.html?q=dc">dc-path%</a></li>
+            <li><a href="http://docs.racket-lang.org/draw/bitmap_.html?q=dc">bitmap%</a>[<a href="#" onClick="runTests(bitmaps, context)">Run Tests</a>]</li>
+            <li><a href="http://docs.racket-lang.org/draw/bitmap-dc_.html?q=dc">bitmap-dc%</a> [<a href="#" onclick="bdc=new bitmap_dc('winter.jpg'); document.body.appendChild(bdc.canvas)">bind a bitmap-dc%, to <tt>bdc</tt></a>]</li>
+            <li><a href="http://docs.racket-lang.org/draw/brush-list_.html?q=dc">brush-list%</a>, <a href="http://docs.racket-lang.org/draw/brush_.html?q=dc">brush%</a> [<a href="#" onClick="runTests(brushes, context)">Run Tests</a>]</li>
+            <li><a href="http://docs.racket-lang.org/draw/font-list_.html?q=font&q=dc">font-list%</a>, <a href="http://docs.racket-lang.org/draw/font_.html?q=font&q=dc">font%</a> [<a href="#" onClick="runTests(fonts, context)">Run Tests</a>]</li>
+            <li><a href="http://docs.racket-lang.org/draw/color-database___.html?q=dc">color-database%</a>, <a href="http://docs.racket-lang.org/draw/color_.html?q=dc">color%</a></li>
+            <li><a href="http://docs.racket-lang.org/draw/radial-gradient_.html?q=dc">radial-gradient%</a>, <a href="http://docs.racket-lang.org/draw/linear-gradient_.html?q=dc">linear-gradient%</a> [<a href="#" onClick="runTests(gradients, context)">Run Tests</a>]</li>
+            <li><a href="http://docs.racket-lang.org/draw/pen-list_.html?q=dc">pen-list%</a>, <a href="http://docs.racket-lang.org/draw/pen_.html?q=dc">pen%</a> [<a href="#" onClick="runTests(pens, context)">Run Tests</a>] (WONTFIX: dashed/dotted line drawing is not supported)</li>
+            <li><a href="http://docs.racket-lang.org/draw/point_.html?q=dc">point%</a></li>            
+        </ul>
         <br/>
         Feel free to try out the API manually:<br/>
-        Open a javascript console, and refer to functions of the <tt>context</tt> object. For example, if you'd like to use the <tt>draw-rounded-rectangle</tt> function, you would type <tt>context.drawRoundedRectangle(0,0,100,100,30)</tt>. Any input that requires a list (<tt>new Gradient()</tt>, for example) should instead be passed a javascript array.
-        <br/>
-        <img src="icon.gif" id="i1" style="visibility: hidden;"/>
-        <img src="BWMask.gif" id="BWmask" style="visibility: hidden;"/>
-        <img src="AlphaMask.png" id="AlphaMask" style="visibility: hidden;"/>
-        <img src="ColorMask.png" id="ColorMask" style="visibility: hidden;"/>
+        Open a javascript console, and refer to functions of the <tt>context</tt> object. For example, if you'd like to use the <tt>draw-rounded-rectangle</tt> function, you would type <tt>context.drawRoundedRectangle(0,0,100,100,30)</tt>. Any input that requires a list (<tt>new LinearGradient()</tt>, for example) should instead be passed a javascript array. Colors are passed as  <a href="http://docs.racket-lang.org/draw/color_.html?q=dc">color%</a> objects. Images are passed as <a href="http://docs.racket-lang.org/draw/bitmap_.html?q=dc">bitmap%</a> objects. For examples of API calls, see <a href="tests.js">tests.js</a> for details. Any contexts you add (through <tt>new dc()</tt> or <tt>new bitmap_dc()</tt>) can be bound to a variable, and their canvas can be added to the document through normal DOM methods <tt>document.body.appendChild(<i>context</i>.canvas)</tt>.<br/> 
     </body>
-    <script type="text/javascript" src="dc-tests.js"></script>
+
+        <script type="text/javascript" src="tests.js"></script>
 </html>

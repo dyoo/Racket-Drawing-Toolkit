@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns = "http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>ctx.measureText - the way it should be</title>
+    <!-- 
+     This would NOT BE POSSIBLE without the incredible work done at 
+     http://mudcu.be/journal/2011/01/html5-typographic-metrics/#baselineCanvas
+     All I've done is clean up the code, wrap it, and subclassed the native canvas measureText function
+     -->
+<script type="text/javascript">
+
+CanvasRenderingContext2D.prototype._measureText = CanvasRenderingContext2D.prototype.measureText;
+CanvasRenderingContext2D.prototype.measureText = function(str){
+    var metrics = this._measureText(str);
+    metrics.str = str;
+    metrics.font = this.font;
+	// setting up html used for measuring text-metrics
+	var container = document.createElement("div"); 
+	var parent = document.createElement("span");
+    parent.style.font = this.font;
+	var image = document.createElement("img");              // hack to get at CSS baselines properties
+    container.style.cssText = "position: absolute; top: 0px; left: 0px;  zIndex=-1; visibility: hidden";
+	image.width = 42;
+	image.height = 1;
+	image.src = "./1x1.png";
+	parent.appendChild(document.createTextNode(str));
+	parent.appendChild(image);
+	container.appendChild(parent);
+    document.body.appendChild(container);
+	
+	// getting css equivalent of ctx.measureText()
+	image.style.display = "none";
+	parent.style.display = "inline";
+    metrics.width = parent.offsetWidth;
+    metrics.height = parent.offsetHeight;
+    
+	// making sure super-wide text stays in-bounds
+	image.style.display = "inline";
+	var forceWidth = metrics.width + image.offsetWidth;
+    
+	// capturing the "top" and "bottom" baseline
+	parent.style.cssText = "margin: 50px 0; display: block; width: " + forceWidth + "px";
+    metrics.topBaseline = image.offsetTop - 49;
+    metrics.bottomBaseline = metrics.topBaseline - parent.offsetHeight;
+    
+	// capturing the "middle" baseline
+	parent.style.cssText = "line-height: 0; display: inline; width: " + forceWidth + "px";
+	metrics.middleBaseline = image.offsetTop + 1;
+    
+    metrics.alphaBaseline = 0;
+    metrics.descender = metrics.alphaBaseline - metrics.bottomBaseline;
+    metrics.topPadding = metrics.height - metrics.topBaseline;
+
+    document.body.removeChild(container);       // clean up after ourselves
+    console.log(metrics);
+    return metrics;
+}
+ 
+function debugTextMetrics(metrics, ctx){
+    // draw a diagram to prove things
+    ctx.canvas.width = metrics.width+150;
+    setFont();
+    
+    ctx.fillStyle = "black";
+    ctx.fillText(metrics.str, 0, 100);
+    ctx.font = "10px sans-serif";
+    var labelX = metrics.width+30;
+    
+    // draw the height and width boundaries
+    ctx.strokeRect(0,100-metrics.height, metrics.width, metrics.height);
+    ctx.fillText("width: "+metrics.width+", height: "+metrics.height, 0,120);
+    ctx.fillText("descender: "+metrics.descender+", topPadding: "+metrics.topPadding, 0,140);
+    
+    // draw the alphabetic baseline
+    ctx.strokeStyle = "blue";
+    ctx.beginPath();
+    ctx.moveTo(0, 100-metrics.alphaBaseline);
+    ctx.lineTo(labelX, 100-metrics.alphaBaseline);
+    ctx.stroke();
+    ctx.fillText("alphabetic baseline: "+metrics.alphaBaseline, labelX, 100);
+    // draw the top baseline
+    ctx.strokeStyle = "green";
+    ctx.beginPath();
+    ctx.moveTo(0, 100-metrics.topBaseline);
+    ctx.lineTo(labelX, 100-metrics.topBaseline);
+    ctx.stroke();
+    ctx.fillText("top baseline: "+metrics.topBaseline, labelX, 100-metrics.topBaseline);    
+    // draw the middle baseline
+    ctx.strokeStyle = "red";
+    ctx.beginPath();
+    ctx.moveTo(0, 100-metrics.middleBaseline);
+    ctx.lineTo(labelX, 100-metrics.middleBaseline);
+    ctx.stroke();
+    ctx.fillText("middle baseline: "+metrics.middleBaseline, labelX, 100-metrics.middleBaseline);
+    // draw the botton baseline
+    ctx.strokeStyle = "purple";
+    ctx.beginPath();
+    ctx.moveTo(0, 100-metrics.bottomBaseline);
+    ctx.lineTo(labelX, 100-metrics.bottomBaseline);
+    ctx.stroke();
+    ctx.fillText("bottom baseline: "+metrics.bottomBaseline, labelX, 100-metrics.bottomBaseline);
+
+    return metrics;
+};
+
+function performMeasurement(){
+    setFont(); 
+    var ctx = document.getElementById('c').getContext('2d'); 
+    debugTextMetrics(ctx.measureText(document.getElementById('str').value), ctx);
+}
+    
+// use the UI to grab font properties, build a font string
+function setFont(){
+    var font = document.body.style.fontFamily;
+    var size = document.body.style.fontSize;
+    var fontString = size + " " + font;
+    var ctx = document.getElementById('c').getContext('2d');
+    ctx.font = fontString;
+}
+</script>
+</head>
+    <body style="font-family: Arial; font-size: 44px;">
+    <input type="text" id="str" value="Type something, then click 'measure'" size="40"/>
+    <input type="button" value="measure" onclick="performMeasurement()" />
+        <br/>
+    <canvas id="c" style="display: ;"></canvas>
+</body>
+</html>
