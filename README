@@ -1,0 +1,3 @@
+A javascript implementation of the Racket Drawing Toolkit.
+
+Some functionality (notably dashed strokes) only works in FF8+ and WebKit Nightlies, though the vast majority should work in any browser with decent Canvas support. 
