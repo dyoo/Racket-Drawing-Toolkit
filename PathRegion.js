@@ -596,6 +596,11 @@ Region.prototype.setEllipse = function(x, y, w, h){
 // Set the region to the Path specificed, offset by x and y
 // TODO: use fillStyle
 Region.prototype.setPath = function(path, xOffset, yOffset, fillStyle){
+    // winding => nonzero, odd-even => evenodd (currently only works on Mozilla 7+)
+    if(fillStyle == undefined) fillStyle = "winding";
+    if(fillStyle !== "winding") console.log("WARNING: Even-Odd fill rule is only supported on Mozilla 7+");
+    this.ctx.mozFillRule = (fillStyle == "winding")? "nonzero" : "evenodd";
+
     this.ctx.canvas.width = this.ctx.canvas.width;
     p.translate(xOffset, yOffset);          // translate the path using the offsets
     p.makeCanvasPath(this.ctx);             // draw it in the current context
@@ -607,6 +612,10 @@ Region.prototype.setPath = function(path, xOffset, yOffset, fillStyle){
 // setPolygon : (Vector points) Real Real fillStyle -> void
 // Set the region to the polygon specificed by these points, offset by x and y. (Use a path)
 Region.prototype.setPolygon = function(points, xOffset, yOffset, fillStyle){
+    // winding => nonzero, odd-even => evenodd (currently only works on Mozilla 7+)
+    if(fillStyle == undefined) fillStyle = "winding";
+    this.ctx.mozFillRule = (fillStyle == "winding")? "nonzero" : "evenodd";
+
     this.ctx.canvas.width = this.ctx.canvas.width;
     if(xOffset == undefined) xOffset = 0;
     if(yOffset == undefined) yOffset = 0;

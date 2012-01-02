@@ -104,11 +104,15 @@ Bitmap.prototype.getLoadedMask = function(){
 
 // has-alpha-channel : void -> Boolean
 // does the bitmap contain an alpha channel?
-Bitmap.prototype.hasAlphaChannel = CanvasRenderingContext2D.hasAlpha;
+Bitmap.prototype.hasAlphaChannel = function(){
+    return this.ctx.hasAlpha();
+};
 
 // is-color : void -> Boolean
 // is the bitmap monochrome?
-Bitmap.prototype.isColor = CanvasRenderingContext2D.isColor;
+Bitmap.prototype.isColor = function(){
+    return this.ctx.isColor();
+};
 
 // ok : void -> Boolean
 // Returns #t if the bitmap is valid in the sense that an image file was loaded successfully.

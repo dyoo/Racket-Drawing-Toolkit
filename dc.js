@@ -83,7 +83,13 @@ function dc(width, height){
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // provide custom fill implementation, using our brush
-dc.prototype.fill = function(p){
+dc.prototype.fill = function(p, fillStyle){
+    
+    // winding => nonzero, odd-even => evenodd (currently only works on Mozilla 7+)
+    if(fillStyle == undefined) fillStyle = "winding";
+    if(fillStyle !== "winding") console.log("Even-Odd fill rules are only supported on Mozilla 7+");
+    this.ctx.mozFillRule = (fillStyle == "winding")? "nonzero" : "evenodd";
+    
     this.buffer.beginPath();       // empty the current list of subpaths
     p.makeCanvasPath(this.buffer); // generate native path from %path object
     
@@ -132,22 +138,40 @@ dc.prototype.stroke = function(p){
     this.buffer.lineJoin     = this.pen.join;
     this.buffer.lineWidth    = this.pen.width;
     
-    // transparent pens don't draw at all
-    if(this.pen.style == "transparent") return;
-    
-    // hilite pens draw with a 30% alpha
-    if(this.pen.style == 'hilite'){
-        var c = this.pen.color;
-        this.buffer.strokeStyle = "rgba("+c.red()+","+c.green()+","+c.blue()+",0.3)";
-    } 
-    
-    else if(this.pen.style == "solid"){
-        this.buffer.strokeStyle = this.pen.color.getRGBA();
-    }
-    
-    // if the style requires fanciness, we give up
-    else if(this.pen.styles.indexOf(this.pen.style) > -1){
-        console.log("WARNING: Dotted/Dashed Strokes are not supported");
+    switch(this.pen.style){
+        // transparent pens don't draw at all
+        case "transparent": 
+            return;
+            break;
+        case "solid":
+            this.buffer.strokeStyle = this.pen.color.getRGBA();
+            break;
+        // hilite pens draw with a 30% alpha
+        case "hilite":
+            var c = this.pen.color;
+            this.buffer.strokeStyle = "rgba("+c.red()+","+c.green()+","+c.blue()+",0.3)";
+            break;
+        case "dot":
+            console.log("WARNING: dotted lines are _probably_ not supported: dc.js");
+            this.buffer.mozDash = [1,2];       // experimental Mozilla Support
+            this.buffer.webkitLineDash = [1,2];// experimental Webkit Support
+            break;
+        case "long-dash":
+            console.log("WARNING: long-dashed lines are _probably_ not supported: dc.js");
+            this.buffer.mozDash = [4,2];       // experimental Mozilla Support
+            this.buffer.webkitLineDash = [4,2];// experimental Webkit Support
+            break;
+        case "short-dash":
+            console.log("WARNING: short-dashed lines are _probably_ not supported: dc.js");
+            this.buffer.mozDash = [2,2];       // experimental Mozilla Support
+            this.buffer.webkitLineDash = [2,2];// experimental Webkit Support
+            break;
+        case "dot-dash":
+            console.log("WARNING: dot-dashed lines are _probably_ not supported: dc.js");
+            this.buffer.mozDash = [4,2,1,2];       // experimental Mozilla Support
+            this.buffer.webkitLineDash = [4,2,1,2];// experimental Webkit Support
+            break;
+        default: console.log("WARNING: xor pen styles are NOT SUPPORTED: dc.js");
     }
     
     // if a stipple is installed, use it as a pattern
@@ -228,8 +252,6 @@ dc.prototype.setSmoothing = function(mode){
 };
 
 // cacheFontMetricsKey : void -> exact-integer
-// TODO: is it possible that we share some behavior with an existing context?
-// return 0 to be on the safe side
 dc.prototype.cacheFontMetricsKey = function(){ 
     return 0; 
 };
@@ -374,12 +396,11 @@ dc.prototype.drawLines = function(points, xOffset, yOffset){
 };
 
 // drawPath : path [xOffset yOffset fillStyle] -> void
-// TODO: use fillStyle argument
 dc.prototype.drawPath = function(path, xOffset, yOffset, fillStyle){ 
     if(xOffset == undefined) xOffset = 0;
     if(yOffset == undefined) yOffset = 0;
     path.translate(xOffset, yOffset);
-    this.fill(path);
+    this.fill(path, fillStyle);
 };
 
 // drawPoint : x y -> void
@@ -400,7 +421,7 @@ dc.prototype.drawPolygon = function(points, xOffset, yOffset, fillStyle){
     // close the polygon
     p.lineTo(points[0].x+xOffset, points[0].y+yOffset);
     p.close();
-    this.fill(p);
+    this.fill(p, fillStyle);
     this.stroke(p);
 };
 
@@ -499,7 +520,6 @@ dc.prototype.getTextForeground = function(){
 };
 
 // getTextExtent : string [font% combine offset] -> real real real real
-// TODO: more rigorous testing, with different fonts
 dc.prototype.getTextExtent = function(str, font, combine, offset){ 
     this.buffer.save();
     if(font) this.buffer.font = font.toCSSString();
