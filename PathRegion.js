@@ -564,7 +564,7 @@ Region.prototype.isEmpty = function(rgn){
     if(!this.dc) throw "exn:fail:contract -- a region must have an attached DC to check if empty";
     else{
         var box = this.boundingBox;
-        return box && (box[2] - box[0])*(box[3] - box[1]) < 4; // is the area of bounding box 4 pixels or less?
+        return box && (box[2] - box[0])*(box[3] - box[1]) === 0; // is the area of bounding box 0?
     }
 };
 
